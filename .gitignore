@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+__init__.py
+*.pyc
+config.py
+data/events.json
