@@ -13,6 +13,9 @@ def load_events():
     with open("data/events.json", "r", encoding='utf-8') as f:
         return json.load(f)
 
+
+
+
 # Налаштування логування (щоб бачити помилки в консолі, якщо вони будуть)
 logging.basicConfig(level=logging.ERROR)
 
@@ -50,7 +53,7 @@ async def show_week_events(message: types.Message):
 @dp.message(F.text == "📅 Події сьогодні")
 async def show_today_events (message: types.Message):
     # отримуємо сьогоднішню дату
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = datetime.now().strftime("%d.%m.%Y")
     # відкриваємо файл events.json
     events = load_events()
 
@@ -64,6 +67,8 @@ async def show_today_events (message: types.Message):
         await message.answer(response, parse_mode="HTML")
     else:
         await message.answer("На сьогодні подій не знайдено. Відпочиваємо! 😉")
+        # Показати найближчу подію
+
 # Функція запуску бота
 async def main():
     print("--- Бот запущений і готовий до роботи в Долинській! ---")
