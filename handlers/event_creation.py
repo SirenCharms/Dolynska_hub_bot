@@ -6,10 +6,32 @@ import json
 
 # Імпорт станів та кнопок
 from states import AddEvent
-from utils.keyboard import get_confirm_keyboard, get_main_menu, get_return_keyboard
+from utils.keyboard import get_confirm_keyboard, get_main_menu, get_return_keyboard, get_skip_keyboard
 
 # Створюєм роутер
 router = Router()
+
+
+# DRY summary
+async def show_summary(message: types.Message, state: FSMContext):
+    user_data = await state.get_data()
+    summary = (
+        f"👁‍🗨 Чекаю на підтвердження!\n\n"
+        f"📌 Назва: {user_data['title']}\n"
+        f"📅 Дата: {user_data['date']}\n"
+        f"⌛ Час: {user_data['time']}\n"
+        f"📝 Опис: {user_data['description']}\n"
+        f"Все вірно? Оберіть дію нижче: 👇"
+    )
+    if user_data.get('poster') == "no_poster":
+        await message.answer(summary, reply_markup=get_confirm_keyboard())
+    else:
+        await message.answer_photo(
+            photo = user_data['poster'],
+            caption = summary,
+            reply_markup=get_confirm_keyboard()
+            )
+    await state.set_state(AddEvent.confirm)
 
 # Кнопка підтвердження вище для пріорітету фльтрів
 @router.message(AddEvent.confirm, F.text == "✅ Підтвердити")
@@ -48,6 +70,12 @@ async def return_main_menu (message: types.Message, state: FSMContext):
     await state.clear()
     await message.answer("Повертаємось до головного меню", reply_markup=get_main_menu())
 
+# Кнопка пропуску завантаження постера
+@router.message(AddEvent.poster, F.text == "Пропустити ⏭️")
+async def skip_poster(message: types.Message, state: FSMContext):
+    await state.update_data(poster = "no_poster")
+    await show_summary(message, state)
+
 # Обробник для кнопки "+ Додати подію" СТАРТ АНКЕТИ
 @router.message(F.text == "✍️ Додати подію")
 async def start_add_event(message: types.Message, state: FSMContext):
@@ -84,7 +112,7 @@ async def process_date(message: types.Message, state: FSMContext):
     except ValueError:
         await message.answer(
             "❌ Невірний формат дати!\n"
-            "Будь ласка, введіть дату у форматі **ДД.ММ.РРРР** (наприклад: 25.12.2026).\n"
+            "Будь ласка, введіть дату у форматі <b>ДД.ММ.РРРР</b> (наприклад: 25.12.2026).\n"
             "Переконайтеся, що такий день дійсно існує."
         )
 
@@ -106,26 +134,24 @@ async def process_time(message: types.Message, state: FSMContext):
             "Використовуйте 24-годинний формат."
         )
 
+# Отримую опис події
 @router.message(AddEvent.description)
 async def process_descriprion(message: types.Message, state: FSMContext):
     await state.update_data(description=message.text)
-    await message.answer("На цьому поки все!")
+    await message.answer("Завантажте афішу (фото) або натисніть кнопку нижче:", reply_markup=get_skip_keyboard())
+    await state.set_state(AddEvent.poster)
 
-    # Витягуємо всі збережені данні з чернетки (FSMContext)
-    user_data = await state.get_data()
-    # await message.answer(get_confirm_keyboard)
-    summary = (
-        f"👁‍🗨 Чекаю на підтвердження!\n\n"
-        f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"📌 Назва: {user_data['title']}\n"
-        f"📅 Дата: {user_data['date']}\n"
-        f"⌛ Час: {user_data['time']}\n"
-        f"📝 Опис: {user_data['description']}\n"
-        f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"Все вірно? Оберіть дію нижче: 👇"
-    )
 
-    await message.answer(summary, reply_markup=get_confirm_keyboard())
-    await state.set_state(AddEvent.confirm)
-    
+# Хендлер афіши
+@router.message(AddEvent.poster, F.photo)
+async def process_poster(message: types.Message, state: FSMContext):
+    poster_id = message.photo[-1].file_id # getting ID photo
+    await state.update_data(poster=poster_id) # Оновлюємо дані в state 
+    await show_summary(message, state)
+    # await message.answer("На цьому поки все!")
+
+# Хендлер-заглушка якщо надіслона не фото і не кнопку
+@router.message(AddEvent.poster)    
+async def invalid_poster(message: types.Message):
+    await message.answer("Будь ласка, надішліть фото або натисніть кнопку 'Пропустити ⏭️'")
 

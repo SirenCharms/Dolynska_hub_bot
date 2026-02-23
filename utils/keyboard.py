@@ -23,8 +23,15 @@ def get_confirm_keyboard():
         [KeyboardButton(text="❌ Скасувати")]
     ]
     return ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True, input_field_placeholder="Все вірно?")
+
 def get_return_keyboard():
     kb = [
         [KeyboardButton(text="⬅️ Відмінити")]
+    ]
+    return ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
+
+def get_skip_keyboard():
+    kb = [
+        [KeyboardButton(text="Пропустити ⏭️")]
     ]
     return ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
