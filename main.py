@@ -6,15 +6,10 @@ from datetime import datetime
 from aiogram import F # F - магічний фльтр тексту
 from config import BOT_TOKEN  # Підтягуємо твій токен із сусіднього файлу
 from utils.keyboard import get_main_menu
-import json
-from handlers.event_creation import router
-
-def load_events():
-    with open("data/events.json", "r", encoding='utf-8') as f:
-        return json.load(f)
-
-
-
+# from handlers.event_creation import router
+# from handlers.event_view import router
+from handlers import event_creation, event_view
+from utils.json_manager import load_events
 
 # Налаштування логування (щоб бачити помилки в консолі, якщо вони будуть)
 logging.basicConfig(level=logging.ERROR)
@@ -24,7 +19,8 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
 # Підключаємо РОУТЕР!
-dp.include_router(router)
+dp.include_router(event_creation.router)
+dp.include_router(event_view.router)
 
 # Обробник команди /start
 @dp.message(Command("start"))
@@ -48,27 +44,6 @@ async def show_week_events(message: types.Message):
         week_response += f"🔹{e['date']}\n{e['title']}\n{e['description']}\n\n"
     await message.answer(week_response, parse_mode="HTML")
     
-
-# Реагуємо на "події сьогодні"
-@dp.message(F.text == "📅 Події сьогодні")
-async def show_today_events (message: types.Message):
-    # отримуємо сьогоднішню дату
-    today = datetime.now().strftime("%d.%m.%Y")
-    # відкриваємо файл events.json
-    events = load_events()
-
-    # Шукаємо події на сьогодні
-    today_events = [e for e in events if e ["date"] == today]
-
-    if today_events:
-        response = "📅 <b>Події сьогодні у Долинській:</b>\n\n"
-        for ev in today_events:
-            response += f"🔹 {ev['title']}\n{ev['description']}\n\n"
-        await message.answer(response, parse_mode="HTML")
-    else:
-        await message.answer("На сьогодні подій не знайдено. Відпочиваємо! 😉")
-        # Показати найближчу подію
-
 # Функція запуску бота
 async def main():
     print("--- Бот запущений і готовий до роботи в Долинській! ---")

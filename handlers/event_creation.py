@@ -79,6 +79,8 @@ async def skip_poster(message: types.Message, state: FSMContext):
 # Обробник для кнопки "+ Додати подію" СТАРТ АНКЕТИ
 @router.message(F.text == "✍️ Додати подію")
 async def start_add_event(message: types.Message, state: FSMContext):
+    # Зберігаємо ID користувача одразу в пам'ять
+    await state.update_data(user_id = message.from_user.id)
     await message.answer("Назва події?", reply_markup=get_return_keyboard())
     await state.set_state(AddEvent.title)
 
