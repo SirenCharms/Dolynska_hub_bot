@@ -8,7 +8,7 @@ from config import BOT_TOKEN  # Підтягуємо твій токен із с
 from utils.keyboard import get_main_menu
 # from handlers.event_creation import router
 # from handlers.event_view import router
-from handlers import event_creation, event_view
+from handlers import event_creation, event_view, my_events
 from utils.json_manager import load_events
 
 # Налаштування логування (щоб бачити помилки в консолі, якщо вони будуть)
@@ -21,6 +21,7 @@ dp = Dispatcher()
 # Підключаємо РОУТЕР!
 dp.include_router(event_creation.router)
 dp.include_router(event_view.router)
+dp.include_router(my_events.router)
 
 # Обробник команди /start
 @dp.message(Command("start"))

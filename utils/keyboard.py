@@ -5,7 +5,7 @@ def get_main_menu():
     # Кожен вкладений список [ ] — це окремий рядок кнопок
     kb = [
         [KeyboardButton(text="📅 Найближчі події"), KeyboardButton(text="🗓️ Події на тиждень")],
-        [KeyboardButton(text="✍️ Додати подію")],
+        [KeyboardButton(text="✍️ Додати подію"), KeyboardButton(text="👤 Мої події")],
         [KeyboardButton(text="ℹ️ Про проєкт")]
     ]
 

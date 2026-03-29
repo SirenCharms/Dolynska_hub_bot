@@ -1,6 +1,9 @@
 from datetime import datetime
 from aiogram import Router, F, types
+from aiogram.types import FSInputFile
 from utils.json_manager import load_events
+from config import PLACEHOLDER
+from utils.json_manager import get_event_display_data
 
 router = Router()
 
@@ -25,28 +28,26 @@ async def nearest_event(message: types.Message):
     
     if not future_events:
         await message.answer("На жаль, всі події вже минули. Чекаємо на нові анонси!")
-
+    
     # Сортуємо за датою (від найближчої)
     future_events.sort(key=lambda x: (x[0], x[1]['time']))
-
+    
+    if not future_events:
+        return
+    
     # Беремо дату найпершої події
     nearest_date = future_events[0][0].date()
-
+    
     # Виводимо всі події, які припадають на цю саму дату
     for date_obj, event in future_events:
-        print(f"Порівнюю: {date_obj.date()} з {nearest_date}")
+        # print(f"Порівнюю: {date_obj.date()} з {nearest_date}")
         if date_obj.date() == nearest_date:
+            photo, caption, _ = get_event_display_data(event)
             summary = (
                 f"🌟 <b>НАЙБЛИЖЧА ПОДІЯ</b> 🌟\n\n"
-                f"📌 Назва: {event['title']}\n"
-                f"📅 Дата: {event['date']}\n"
-                f"⌛ Час: {event['time']}\n"
-                f"📝 Опис: {event['description']}\n"
+                f"{caption}"
             )
-            if event.get('poster') and event['poster'] != "no_poster":
-                await message.answer_photo(photo=event['poster'], caption=summary, parse_mode="HTML")
-            else:
-                await message.answer(summary, parse_mode="HTML")
+            await message.answer_photo(photo=photo, caption=summary, parse_mode="HTML")
         else:
             # Оскільки список відсортований, як тільки пішли інші дати — можна зупинятись
             break

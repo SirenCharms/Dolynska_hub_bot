@@ -3,6 +3,7 @@ from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from datetime import datetime
 import json
+from utils.json_manager import get_event_display_data
 
 # Імпорт станів та кнопок
 from states import AddEvent
@@ -15,21 +16,17 @@ router = Router()
 # DRY summary
 async def show_summary(message: types.Message, state: FSMContext):
     user_data = await state.get_data()
+    photo, caption, _ =  get_event_display_data(user_data)
     summary = (
         f"👁‍🗨 Чекаю на підтвердження!\n\n"
-        f"📌 Назва: {user_data['title']}\n"
-        f"📅 Дата: {user_data['date']}\n"
-        f"⌛ Час: {user_data['time']}\n"
-        f"📝 Опис: {user_data['description']}\n"
+        f"{caption}\n"
         f"Все вірно? Оберіть дію нижче: 👇"
     )
-    if user_data.get('poster') == "no_poster":
-        await message.answer(summary, reply_markup=get_confirm_keyboard())
-    else:
-        await message.answer_photo(
-            photo = user_data['poster'],
+    await message.answer_photo(
+            photo = photo,
             caption = summary,
-            reply_markup=get_confirm_keyboard()
+            reply_markup=get_confirm_keyboard(),
+            parse_mode="HTML"
             )
     await state.set_state(AddEvent.confirm)
 
@@ -38,6 +35,10 @@ async def show_summary(message: types.Message, state: FSMContext):
 async def confirm_event(message: types.Message, state: FSMContext):
     # Отримуємо данні які записали в чернетку
     user_data = await state.get_data()
+    # Ми беремо все з user_data і додаємо унікальний event_id
+    new_event = user_data.copy()
+    new_event["event_id"] = int(datetime.now().timestamp())
+
     # Читаємо старий файл
     try:
         with open("data/events.json", "r", encoding="utf-8") as f:
@@ -46,7 +47,7 @@ async def confirm_event(message: types.Message, state: FSMContext):
         events_list = []
     
     # Додаємо нову подію до списку
-    events_list.append(user_data)
+    events_list.append(new_event)
 
     # Записуємо оновлений список назад у файл
     with open("data/events.json", "w", encoding="utf-8") as f:
